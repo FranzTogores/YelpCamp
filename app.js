@@ -3,6 +3,7 @@ const app = express();
 const path = require('path');
 const mongoose = require('mongoose');
 const ejsMate = require('ejs-mate');
+
 const methodOverrride = require('method-override');
 const Campground = require('./models/campground');
 
@@ -41,7 +42,7 @@ app.get('/campgrounds/new', (req, res) => {
     res.render('campgrounds/new');
 });
 
-app.post('/campgrounds', async (req, res) => {
+app.post('/campgrounds', async (req, res, next) => {
     const campground = new Campground(req.body.campground);
     await campground.save();
     res.redirect(`/campgrounds/${campground._id}`);
@@ -68,6 +69,10 @@ app.delete('/campgrounds/:id', async (req, res) => {
     await Campground.findByIdAndDelete(id);
     res.redirect('/campgrounds');
 });
+
+app.use((err, req, res, next) => {
+    res.send('Something went wrong!')
+})
 
 app.listen(3000, () => {
     console.log('Serving on port 3000');
