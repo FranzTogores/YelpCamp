@@ -13,17 +13,18 @@ const methodOverrride = require('method-override');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user');
+const MongoStore = require('connect-mongo');
 
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-// const dbUrl = process.env.DB_URL;
 
 const userRoutes = require('./routes/users');
 const campgroundRoutes = require('./routes/campgrounds');
 const reviewRoutes = require('./routes/reviews');
 
+const dbUrl = 'mongodb://127.0.0.1:27017/tucamping';
 
-mongoose.connect('mongodb://127.0.0.1:27017/tucamping')
+mongoose.connect(dbUrl)
     .then(() => {
         console.log("MONGO CONNECTION OPEN!!!");
     })
@@ -47,9 +48,22 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverrride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(mongoSanitize());
+app.use(mongoSanitize({
+    replaceWith: '_'
+}));
+
+const store = MongoStore.create({
+    mongoUrl: dbUrl,
+    secret: 'thisisasecret',
+    touchAfter: 24 * 60 * 60
+});
+
+store.on('error', function(e){
+    console.log('SESSION STORE ERROR', e)
+});
 
 const sessionConfig = {
+    store,
     name: 'session',
     secret: 'thisisasecret',
     resave: false,
